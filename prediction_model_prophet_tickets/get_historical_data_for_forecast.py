@@ -9,4 +9,3 @@ for ticker in tickers:
         for i in result:
             f.write(str(i) + ',')
         print(f'{ticker} is done! Information has been saved')
-        f.close()
