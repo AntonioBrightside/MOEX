@@ -72,7 +72,7 @@ def get_current_currency_price(ticker='USD000000TOD', datablock='marketdata', en
 def get_historical_data(start_date, ticker,
                         datablock='history', engine='stock', market='shares', board='TQBR',
                         columns='TRADEDATE, OPEN, CLOSE'):
-    """To get historical stocks data. Return list of data: date, open, close.
+    """To get historical stocks data from specific date. Return list of data: date, open, close.
     :argument start_date: should be in string format like '2023-01-01'"""
 
     result = []
@@ -102,3 +102,57 @@ def get_historical_data(start_date, ticker,
 
     recursion(start_date=start_date, ticker=ticker, finish_date=None)
     return result
+
+
+def get_historical_data_with_end_data(start_date, finish_date, ticker,
+                                      datablock='history', engine='stock', market='shares', board='TQBR',
+                                      columns='TRADEDATE, OPEN, CLOSE'):
+    """To get historical stocks data from specific till specific date.
+    Accept only one ticker. Return list of data: date, open, close.
+    :argument start_date: should be in string format like '2023-01-01'
+    :argument finish_date: should be in string format like '2023-01-03'
+    :argument ticker: accept only one ticker"""
+
+    result = []
+
+    finish_date = datetime.datetime.strptime(finish_date, '%Y-%m-%d').date()
+    days = [finish_date - datetime.timedelta(days=i) for i in range(4)]
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+
+    def get_data(start_date=start_date, end_date=None):
+        URL = f'http://iss.moex.com/iss/history/engines/{engine}/markets/{market}/boards/{board}/securities/{ticker}.json'
+        r = requests.get(URL, params={'iss.meta': 'off', 'iss.only': datablock,
+                                      'iss.json': 'extended',
+                                      f'{datablock}.columns': columns,
+                                      'from': start_date,
+                                      'till': end_date})
+
+        data = r.json()[1].get(datablock)
+        for i in data:
+            for key in i:
+                result.append(i[key])
+
+        end_date = data[len(data) - 1].get('TRADEDATE')
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
+        return end_date
+
+    while True:
+
+        end_date = start_date + datetime.timedelta(days=100)
+
+        if finish_date <= end_date:
+            end_date = finish_date
+
+        if end_date in days:  # ?
+            if end_date in result:
+                return result
+            else:
+                get_data(start_date=start_date, end_date=end_date)
+                return result
+        else:
+            end_date = get_data(start_date=start_date, end_date=end_date)
+            start_date = end_date
+
+
+result = get_historical_data_with_end_data(start_date='2022-01-03', finish_date='2023-06-05', ticker='GAZP')
+print(result)
