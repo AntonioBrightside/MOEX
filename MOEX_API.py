@@ -152,7 +152,3 @@ def get_historical_data_with_end_data(start_date, finish_date, ticker,
         else:
             end_date = get_data(start_date=start_date, end_date=end_date)
             start_date = end_date
-
-
-result = get_historical_data_with_end_data(start_date='2022-01-03', finish_date='2023-06-05', ticker='GAZP')
-print(result)
